@@ -21,24 +21,41 @@ struct Pesanan {
 
 // Fungsi untuk menampilkan katalog
 void tampilkanKatalog(const vector<Destinasi>& katalog) {
-    cout << "\n=== Katalog Destinasi Wisata ===\n";
-    for (size_t i = 0; i < katalog.size(); i++) {
-        cout << i + 1 << ". " << katalog[i].nama << " - " << katalog[i].negara << " - " << katalog[i].provinsi
-        << " - " << " (Rp " << katalog[i].harga << " - stok :" << katalog[i].stok_tiket << ")\n";
+    cout << "+-------------------------+-------------------+------------------+-------------------------------+------------+-----------------------+\n";
+    cout << "| " << setw(23) << left << "Nama"
+         << "| " << setw(17) << "Negara"
+         << "| " << setw(16) << "Provinsi"
+         << "| " << setw(29) << "Alamat Lengkap"
+         << "| " << setw(10) << "Stok Tiket"
+         << "| " << setw(21) << "Harga (Rp)"
+         << "|\n";
+    cout << "+-------------------------+-------------------+------------------+-------------------------------+------------+-----------------------+\n";
+    for (int i = 0; i < katalog.size(); i++) {
+        cout << "| " << setw(23) << left << katalog[i].nama
+             << "| " << setw(17) << katalog[i].negara
+             << "| " << setw(16) << katalog[i].provinsi
+             << "| " << setw(29) << katalog[i].alamat_lengkap
+             << "| " << setw(10) << katalog[i].stok_tiket
+             << "| " << setw(21) << katalog[i].harga
+             << "|\n";
     }
-    cout << endl;
+    cout << "+-------------------------+-------------------+------------------+-------------------------------+------------+-----------------------+\n";
 }
 
 int main() {
-    // Katalog wisata (menggunakan vector)
     vector<Destinasi> katalog = {
-        {"Pantai Parangtritis", "Yogyakarta", 75000},
-        {"Candi Borobudur", "Magelang", 100000},
-        {"Gunung Bromo", "Jawa Timur", 125000},
-        {"Taman Mini", "Jakarta", 50000},
-        {"Danau Toba", "Sumatera Utara", 120000}
+        {"Eiffel Tower", "Prancis", "Ile-de-France", "Champ de Mars, Paris", 150, 350000},
+        {"Mount Fuji", "Jepang", "Yamanashi", "Fujinomiya", 120, 300000},
+        {"Statue of Liberty", "Amerika Serikat", "New York", "Liberty Island, NYC", 90, 400000},
+        {"Colosseum", "Italia", "Lazio", "Piazza del Colosseo, Roma", 110, 375000},
+        {"Great Wall", "Tiongkok", "Beijing", "Huairou District", 130, 280000},
+        {"Santorini", "Yunani", "Aegean", "Thira, Cyclades", 100, 330000},
+        {"Burj Khalifa", "Uni Emirat Arab", "Dubai", "1 Sheikh Mohammed bin Rashid", 200, 450000},
+        {"Sydney Opera House", "Australia", "New South Wales", "Bennelong Point, Sydney", 80, 320000},
+        {"Big Ben", "Inggris", "London", "Westminster, London", 140, 310000},
+        {"Christ the Redeemer", "Brasil", "Rio de Janeiro", "Corcovado Mountain", 100, 290000}
     };
-
+    
     // Queue untuk antrian pesanan
     queue<Pesanan> antrian;
 
