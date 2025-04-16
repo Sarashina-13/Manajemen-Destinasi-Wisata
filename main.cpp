@@ -1,7 +1,8 @@
 #include <iostream>
 #include <vector>
-#include <queue>
 #include <string>
+#include <iomanip>
+#include <stack> 
 
 using namespace std;
 
@@ -18,6 +19,34 @@ struct Pesanan {
     string nama_pemesan;
     Destinasi destinasi_dipesan;
 };
+
+// Fungsi untuk enqueue pesanan
+void queuePesanan(vector<Pesanan>& Antrian, const Pesanan& p) {
+    Antrian.push_back(p);
+}
+
+// Fungsi untuk dequeue pesanan
+void dequeuePesanan(vector<Pesanan>& Antrian, stack<Pesanan>& RiwayatUndo) {
+    if (Antrian.empty()) {
+        cout << "Pesanan Kosong\n";
+    } else {
+        RiwayatUndo.push(Antrian.front()); // Simpan ke stack sebelum dihapus
+        Antrian.erase(Antrian.begin());
+        cout << "Pesanan pertama berhasil dihapus dan disimpan untuk undo.\n";
+    }
+}
+
+// fungsi untuk undo
+void undoPesanan(vector<Pesanan>& Antrian, stack<Pesanan>& RiwayatUndo) {
+    if (RiwayatUndo.empty()) {
+        cout << "Tidak ada pesanan yang bisa di-undo.\n";
+    } else {
+        Pesanan undo = RiwayatUndo.top();
+        RiwayatUndo.pop();
+        Antrian.insert(Antrian.begin(), undo); // Masukkan kembali ke antrian (posisi depan)
+        cout << "Pesanan berhasil di-undo dan dikembalikan ke antrian.\n";
+    }
+}
 
 // Fungsi untuk menampilkan katalog
 void tampilkanKatalog(const vector<Destinasi>& katalog) {
@@ -56,44 +85,9 @@ int main() {
         {"Christ the Redeemer", "Brasil", "Rio de Janeiro", "Corcovado Mountain", 100, 290000}
     };
     
-    // Queue untuk antrian pesanan
-    queue<Pesanan> antrian;
-
-    char lanjut;
-    do {
-        tampilkanKatalog(katalog);
-
-        Pesanan pesanan;
-        int pilihan;
-
-        cout << "Nama Pemesan: ";
-        getline(cin >> ws, pesanan.nama_pemesan);
-
-        cout << "Pilih destinasi (1-" << katalog.size() << "): ";
-        cin >> pilihan;
-
-        if (pilihan < 1 || pilihan > katalog.size()) {
-            cout << "Pilihan tidak valid.\n";
-        } else {
-            pesanan.destinasi_dipesan = katalog[pilihan - 1];
-            antrian.push(pesanan);
-            cout << "Pesanan berhasil ditambahkan!\n";
-        }
-
-        cout << "Tambah pesanan lagi? (y/n): ";
-        cin >> lanjut;
-
-    } while (lanjut == 'y' || lanjut == 'Y');
-
-    // Proses antrian pesanan
-    cout << "\n=== Memproses Antrian Pesanan ===\n";
-    while (!antrian.empty()) {
-        Pesanan p = antrian.front();
-        cout << p.nama_pemesan << " memesan ke "
-             << p.destinasi_dipesan.nama << " (" << p.destinasi_dipesan.lokasi
-             << "), Harga: Rp " << p.destinasi_dipesan.harga << endl;
-        antrian.pop();
-    }
+    vector<Pesanan> antrian;
+    
+    stack<Pesanan> riwayatUndo;
 
     return 0;
 }
