@@ -1,6 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <stack>
 #include <string>
 #include <iomanip>
 #include <algorithm>
@@ -19,16 +18,71 @@ struct Destinasi {
 
 struct Pesanan {
     string nama_pemesan;
+    int jumlah_tiket;
     Destinasi destinasi_dipesan;
 };
 
+// fromatting untuk harga
+string formatRupiah(int angka) {
+    string angkaStr = to_string(angka);
+    string hasil;
+
+    int count = 0;
+    // Loop mundur dari belakang string angka
+    for (int i = (int)angkaStr.size() - 1; i >= 0; i--) {
+        hasil.push_back(angkaStr[i]);
+        count++;
+        // Setiap 3 digit tambahkan titik, kecuali di paling depan
+        if (count % 3 == 0 && i != 0) {
+            hasil.push_back('.');
+        }
+    }
+    reverse(hasil.begin(), hasil.end());
+    return "Rp " + hasil;
+}
+
+const int MAX_STACK = 100;
+
 // Stack untuk Undo
-stack<Pesanan> undoStack;
+struct Stack {
+    Pesanan data[MAX_STACK];
+    int top = -1;
+
+    bool isEmpty() {
+        return top == -1;
+    }
+
+    bool isFull() {
+        return top == MAX_STACK - 1;
+    }
+
+    void push(Pesanan p) {
+        if (isFull()) {
+            cout << "❌ Stack penuh!\n";
+            return;
+        }
+        data[++top] = p;
+    }
+    Pesanan pop() {
+        if (isEmpty()) {
+            cout << "❌ Stack kosong!\n";
+            return {};
+        }
+        return data[top--];
+    }
+
+    Pesanan peek() {
+        if (isEmpty()) {
+            return {};
+        }
+        return data[top];
+    }
+};
 
 // Queue dengan Array
 const int MAX_ANTRIAN = 100;
 
-struct QueuePesanan {
+struct Queue {
     Pesanan data[MAX_ANTRIAN];
     int front = 0;
     int rear = -1;
@@ -44,7 +98,7 @@ struct QueuePesanan {
 
     void enqueue(Pesanan p) {
         if (isFull()) {
-            cout << "❌ Antrian penuh!\n";
+            cout << "❌ Queue penuh!\n";
             return;
         }
         rear = (rear + 1) % MAX_ANTRIAN;
@@ -54,7 +108,7 @@ struct QueuePesanan {
 
     Pesanan dequeue() {
         if (isEmpty()) {
-            cout << "❌ Antrian kosong!\n";
+            cout << "❌ Queue kosong!\n";
             return {};
         }
         Pesanan p = data[front];
@@ -64,17 +118,66 @@ struct QueuePesanan {
     }
 
     void tampilkan() {
-        if (isEmpty()) {
-            cout << "📭 Tidak ada pesanan dalam antrian.\n";
-            return;
-        }
-        cout << "\n📋 Daftar Pesanan:\n";
+        cout << "\n🎟️ DAFTAR PESANAN 🎟️\n";
+        cout << "======================================================================================================================\n";
+        cout << left << setw(4)  << "No"
+            << setw(20) << "Nama Pemesan"
+            << setw(25) << "Nama Destinasi"
+            << setw(20) << "Negara"
+            << setw(20) << "Provinsi"
+            << setw(15) << "Jumlah Tiket"
+            << setw(20) << "Total Harga" << endl;
+        cout << "----------------------------------------------------------------------------------------------------------------------\n";
+
         for (int i = 0; i < count; i++) {
             int idx = (front + i) % MAX_ANTRIAN;
-            cout << i + 1 << ". " << data[idx].nama_pemesan
-                 << " memesan ke " << data[idx].destinasi_dipesan.nama
-                 << " - Rp " << data[idx].destinasi_dipesan.harga << "\n";
+            const Pesanan& p = data[idx];
+            cout << left << setw(4)  << i + 1
+                << setw(20) << p.nama_pemesan
+                << setw(25) << p.destinasi_dipesan.nama
+                << setw(20) << p.destinasi_dipesan.negara
+                << setw(20) << p.destinasi_dipesan.provinsi
+                << setw(15) << p.jumlah_tiket
+                << setw(20) << formatRupiah(p.jumlah_tiket * p.destinasi_dipesan.harga) << endl;
+    }
+
+    cout << "======================================================================================================================\n";
+}
+
+
+    // Fungsi hapus pesanan berdasarkan nomor urut tampilan
+    Pesanan hapusPesananByIndex(int index) {
+        Pesanan pesananKosong = {};
+        
+        if (index < 1 || index > count) {
+            return pesananKosong; // Return empty pesanan jika gagal
         }
+        
+        // Ambil pesanan yang akan dihapus berdasarkan nomor tampilan
+        int targetIdx = (front + index - 1) % MAX_ANTRIAN;
+        Pesanan pesananDihapus = data[targetIdx];
+        
+        // Hapus pesanan dengan rebuild queue
+        Pesanan temp[MAX_ANTRIAN];
+        int tempCount = 0;
+        
+        // Copy semua pesanan kecuali yang dihapus
+        for (int i = 0; i < count; i++) {
+            int idx = (front + i) % MAX_ANTRIAN;
+            if (i != (index - 1)) { // Skip pesanan yang akan dihapus
+                temp[tempCount++] = data[idx];
+            }
+        }
+        
+        // Reset queue dan masukkan kembali data yang tersisa
+        front = 0;
+        rear = -1;
+        count = 0;
+        for (int i = 0; i < tempCount; i++) {
+            enqueue(temp[i]);
+        }
+        
+        return pesananDihapus; // Return pesanan yang berhasil dihapus
     }
 
     bool hapusPesanan(const Pesanan& target) {
@@ -103,39 +206,50 @@ struct QueuePesanan {
     }
 };
 
-// Algoritma Bubble Sort untuk mengurutkan berdasarkan nama (A-Z)
-void bubbleSortByName(vector<Destinasi>& arr) {
+void insertionSortByName(vector<Destinasi>& arr) {
     int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {
-        for (int j = 0; j < n - i - 1; j++) {
-            if (arr[j].nama > arr[j + 1].nama) {
-                // Tukar posisi
-                Destinasi temp = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = temp;
-            }
+    for (int i = 1; i < n; i++) {
+        Destinasi key = arr[i];
+        int j = i - 1;
+        
+        // Pindahkan elemen yang lebih besar dari key ke posisi setelahnya
+        while (j >= 0 && arr[j].nama > key.nama) {
+            arr[j + 1] = arr[j];
+            j--;
         }
+        arr[j + 1] = key;
     }
 }
 
-// Algoritma Selection Sort untuk mengurutkan berdasarkan harga (termurah-termahal)
-void selectionSortByPrice(vector<Destinasi>& arr) {
+// Insertion Sort untuk mengurutkan berdasarkan negara (A-Z)
+void insertionSortByCountry(vector<Destinasi>& arr) {
     int n = arr.size();
-    for (int i = 0; i < n - 1; i++) {
-        // Cari harga minimum di array yang belum terurut
-        int min_idx = i;
-        for (int j = i + 1; j < n; j++) {
-            if (arr[j].harga < arr[min_idx].harga) {
-                min_idx = j;
-            }
-        }
+    for (int i = 1; i < n; i++) {
+        Destinasi key = arr[i];
+        int j = i - 1;
         
-        // Tukar elemen minimum dengan elemen pertama
-        if (min_idx != i) {
-            Destinasi temp = arr[i];
-            arr[i] = arr[min_idx];
-            arr[min_idx] = temp;
+        // Pindahkan elemen yang lebih besar dari key ke posisi setelahnya
+        while (j >= 0 && arr[j].negara > key.negara) {
+            arr[j + 1] = arr[j];
+            j--;
         }
+        arr[j + 1] = key;
+    }
+}
+
+// Insertion Sort untuk mengurutkan berdasarkan harga (termurah-termahal)
+void insertionSortByPrice(vector<Destinasi>& arr) {
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
+        Destinasi key = arr[i];
+        int j = i - 1;
+        
+        // Pindahkan elemen yang lebih mahal dari key ke posisi setelahnya
+        while (j >= 0 && arr[j].harga > key.harga) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
     }
 }
 
@@ -147,55 +261,138 @@ void pauseLanjut() {
 
 void tampilkanKatalog(const vector<Destinasi>& katalog) {
     cout << "\n📌 KATALOG DESTINASI WISATA 📌\n";
-    cout << "====================================================================================================\n";
+    cout << "=============================================================================================\n";
     cout << left << setw(4) << "No"
          << setw(25) << "Nama Destinasi"
          << setw(20) << "Negara"
          << setw(20) << "Provinsi"
-         << setw(15) << "Harga"
+         << setw(17) << "Harga"
          << setw(10) << "Stok" << endl;
-    cout << "----------------------------------------------------------------------------------------------------\n";
+    cout << "---------------------------------------------------------------------------------------------\n";
 
     for (size_t i = 0; i < katalog.size(); i++) {
         cout << left << setw(4) << i + 1
              << setw(25) << katalog[i].nama
              << setw(20) << katalog[i].negara
              << setw(20) << katalog[i].provinsi
-             << "Rp " << setw(11) << katalog[i].harga
+             << setw(17) << formatRupiah(katalog[i].harga)
              << setw(10) << katalog[i].stok_tiket << endl;
     }
 
-    cout << "====================================================================================================\n";
+    cout << "=============================================================================================\n";
+}
+
+void menuSort(vector<Destinasi>& katalog) {
+    vector<Destinasi> katalog_terurut = katalog;
+    int opsi_sort;
+    
+    do {
+        cout << "\n📊 MENU SORTING 📊\n";
+        cout << "==========================\n";
+        cout << "1. Urutkan Berdasarkan Nama (A-Z)\n";
+        cout << "2. Urutkan Berdasarkan Negara (A-Z)\n";
+        cout << "3. Urutkan Berdasarkan Harga (Termurah-Termahal)\n";
+        cout << "4. Tampilkan Katalog Asli\n";
+        cout << "0. Kembali ke Menu Utama\n";
+        cout << "Pilih opsi (0-4): ";
+        cin >> opsi_sort;
+
+        switch (opsi_sort) {
+            case 1:
+                insertionSortByName(katalog_terurut);
+                cout << "\n✅ Katalog diurutkan berdasarkan nama (A-Z)\n";
+                tampilkanKatalog(katalog_terurut);
+                break;
+            case 2:
+                insertionSortByCountry(katalog_terurut);
+                cout << "\n✅ Katalog diurutkan berdasarkan negara (A-Z)\n";
+                tampilkanKatalog(katalog_terurut);
+                break;
+            case 3:
+                insertionSortByPrice(katalog_terurut);
+                cout << "\n✅ Katalog diurutkan berdasarkan harga (Termurah-Termahal)\n";
+                tampilkanKatalog(katalog_terurut);
+                break;
+            case 4:
+                katalog_terurut = katalog; // Reset ke data asli
+                cout << "\n✅ Menampilkan data asli\n";
+                tampilkanKatalog(katalog_terurut);
+                break;
+            case 0:
+                cout << "🔙 Kembali ke menu utama...\n";
+                break;
+            default:
+                cout << "⚠️ Pilihan tidak valid!\n";
+        }
+        
+        if (opsi_sort != 0) {
+            pauseLanjut();
+        }
+    } while (opsi_sort != 0);
 }
 
 void tampilkanDashboard() {
     cout << "\n=============================================\n";
-    cout << "      🌍 Manejemen Destinasi Wisata 🌍        \n";
+    cout << "      🌍 Manejemen Destinasi Wisata 🌍      \n";
     cout << "=============================================\n";
     cout << "1. Lihat Katalog Destinasi\n";
     cout << "2. Tambah Pesanan\n";
-    cout << "3. Undo Pesanan Terakhir\n";
-    cout << "4. Proses Semua Pesanan\n";
-    cout << "5. Keluar\n";
+    cout << "3. Lihat Daftar Pesanan\n";
+    cout << "4. Hapus Pesanan\n";
+    cout << "6. Undo Pesanan Terakhir\n";
+    cout << "5. Proses Semua Pesanan\n";
+    cout << "0. Keluar\n";
     cout << "---------------------------------------------\n";
     cout << "Pilih menu (1-5): ";
 }
 
 int main() {
     vector<Destinasi> katalog = {
-        {"Eiffel Tower", "Prancis", "Ile-de-France", "Champ de Mars, Paris", 150, 350000},
-        {"Mount Fuji", "Jepang", "Yamanashi", "Fujinomiya", 120, 300000},
-        {"Statue of Liberty", "Amerika Serikat", "New York", "Liberty Island, NYC", 90, 400000},
-        {"Colosseum", "Italia", "Lazio", "Piazza del Colosseo, Roma", 110, 375000},
-        {"Great Wall", "Tiongkok", "Beijing", "Huairou District", 130, 280000},
-        {"Santorini", "Yunani", "Aegean", "Thira, Cyclades", 100, 330000},
-        {"Burj Khalifa", "Uni Emirat Arab", "Dubai", "1 Sheikh Mohammed bin Rashid", 200, 450000},
-        {"Sydney Opera House", "Australia", "New South Wales", "Bennelong Point, Sydney", 80, 320000},
-        {"Big Ben", "Inggris", "London", "Westminster, London", 140, 310000},
-        {"Christ the Redeemer", "Brasil", "Rio de Janeiro", "Corcovado Mountain", 100, 290000}
+        {"Labuan Bajo", "Indonesia", "NTT", "Flores Island", 20, 800000},
+        {"Fushimi Inari", "Japan", "Kyoto", "Fushimi Ward, Kyoto", 30, 100000},
+        {"Tana Toraja", "Indonesia", "Sulawesi Selatan", "Makale", 15, 200000},
+        {"Petra", "Jordan", "Ma'an", "Wadi Musa", 15, 500000},
+        {"Angkor Wat", "Kamboja", "Siem Reap", "Angkor Archaeological Park", 25, 300000},
+        {"Grand Canyon", "USA", "Arizona", "Grand Canyon Village", 50, 200000},
+        {"Borobudur", "Indonesia", "Jawa Tengah", "Magelang, Jawa Tengah", 45, 75000},
+        {"Mount Merbabu", "Indonesia", "Jawa Tengah", "Boyolali", 25, 50000},
+        {"Bagan Temples", "Myanmar", "Mandalay", "Bagan Archaeological Zone", 20, 250000},
+        {"Sydney Opera", "Australia", "NSW", "Bennelong Point, Sydney", 30, 300000},
+        {"Table Mountain", "South Africa", "Western Cape", "Cape Town", 30, 150000},
+        {"Cappadocia", "Turkey", "Nevşehir", "Central Anatolia", 25, 350000},
+        {"Stonehenge", "UK", "Wiltshire", "Amesbury", 20, 250000},
+        {"Pyramids of Giza", "Egypt", "Giza", "Al Haram, Giza", 35, 300000},
+        {"Burj Khalifa", "UAE", "Dubai", "Downtown Dubai", 40, 500000},
+        {"Taj Mahal", "India", "Uttar Pradesh", "Agra", 40, 200000},
+        {"Agra Fort", "India", "Uttar Pradesh", "Agra", 35, 100000},
+        {"North Pole", "Arctic", "Polar Region", "Arctic Ocean", 5, 5000000},
+        {"Christ Redeemer", "Brazil", "Rio de Janeiro", "Corcovado Mountain", 40, 150000},
+        {"Chichen Itza", "Mexico", "Yucatan", "Tinum Municipality", 25, 180000},
+        {"Acropolis", "Greece", "Attica", "Athens", 35, 200000},
+        {"Colosseum", "Italy", "Lazio", "Piazza del Colosseo, Rome", 40, 400000},
+        {"Florence Cathedral", "Italy", "Lazio", "Florence", 30, 250000},
+        {"Sagrada Familia", "Spain", "Catalonia", "Barcelona", 30, 350000},
+        {"Raja Ampat", "Indonesia", "Papua Barat", "Waigeo Island", 15, 1200000},
+        {"Wamena Valley", "Indonesia", "Papua Barat", "Jayawijaya", 10, 600000},
+        {"Space Station", "Low Orbit", "Space", "ISS", 3, 10000000},
+        {"Victoria Falls", "Zambia", "Southern Province", "Livingstone", 20, 400000},
+        {"Neuschwanstein", "Germany", "Bavaria", "Schwangau", 25, 300000},
+        {"Munich Residenz", "Germany", "Bavaria", "Munich", 20, 250000},
+        {"Milford Sound", "New Zealand", "Southland", "Fiordland NP", 15, 250000},
+        {"Great Wall", "China", "Beijing", "Huairou District", 35, 350000},
+        {"Forbidden City", "China", "Beijing", "Dongcheng District", 30, 300000},
+        {"Niagara Falls", "Canada", "Ontario", "Niagara River", 45, 120000},
+        {"Algonquin Park", "Canada", "Ontario", "Ontario Forest", 20, 90000},
+        {"Bromo Tengger", "Indonesia", "Jawa Timur", "Probolinggo", 25, 150000},
+        {"Ijen Crater", "Indonesia", "Jawa Timur", "Bondowoso", 20, 120000},
+        {"Pura Besakih", "Indonesia", "Bali", "Karangasem, Bali", 30, 50000},
+        {"Eiffel Tower", "France", "Île-de-France", "Champ de Mars, Paris", 50, 450000},
+        {"Lake Toba", "Indonesia", "Sumatera Utara", "Samosir Island", 20, 175000}
     };
 
-    QueuePesanan antrian;
+
+    Queue antrianPesanan;
+    Stack undoStack;
     int pilihan;
 
     do {
@@ -204,28 +401,8 @@ int main() {
 
         switch (pilihan) {
             case 1: {
-                vector<Destinasi> katalog_terurut = katalog;
-                int opsi_sort;
-                cout << "\n🔽 Pilih jenis pengurutan:\n";
-                cout << "1. Berdasarkan Nama (A-Z)\n";
-                cout << "2. Berdasarkan Harga (Termurah-Termahal)\n";
-                cout << "Pilihan: ";
-                cin >> opsi_sort;
-
-                if (opsi_sort == 1) {
-                    // Menggunakan Bubble Sort untuk mengurutkan berdasarkan nama
-                    bubbleSortByName(katalog_terurut);
-                    cout << "\n✅ Katalog diurutkan berdasarkan nama\n";
-                } else if (opsi_sort == 2) {
-                    // Menggunakan Selection Sort untuk mengurutkan berdasarkan harga
-                    selectionSortByPrice(katalog_terurut);
-                    cout << "\n✅ Katalog diurutkan berdasarkan harga\n";
-                } else {
-                    cout << "⚠️  Pilihan tidak valid. Menampilkan data asli.\n";
-                }
-
-                tampilkanKatalog(katalog_terurut);
-                pauseLanjut();
+                tampilkanKatalog(katalog);
+                menuSort(katalog);
                 break;
             }
 
@@ -233,35 +410,91 @@ int main() {
                 tampilkanKatalog(katalog);
                 Pesanan pesanan;
                 int indeks;
-                cout << "Nama Pemesan: ";
-                getline(cin >> ws, pesanan.nama_pemesan);
+
                 cout << "Pilih destinasi (1-" << katalog.size() << "): ";
                 cin >> indeks;
-
                 if (indeks < 1 || indeks > katalog.size()) {
                     cout << "❌ Pilihan tidak valid.\n";
                 } else if (katalog[indeks - 1].stok_tiket == 0) {
                     cout << "❌ Stok tiket habis!\n";
+                    
                 } else {
-                    pesanan.destinasi_dipesan = katalog[indeks - 1];
-                    katalog[indeks - 1].stok_tiket--;
-                    antrian.enqueue(pesanan);
-                    undoStack.push(pesanan);
-                    cout << "✅ Pesanan berhasil ditambahkan!\n";
+                    cout << "Nama Pemesan: ";
+                    getline(cin >> ws, pesanan.nama_pemesan);
+                    cout << "Jumlah tiket yang dipesan: ";
+                    cin >>  pesanan.jumlah_tiket;
+                    if (pesanan.jumlah_tiket > katalog[indeks - 1].stok_tiket)
+                        cout << "❌ Stok tiket kurang!\n";
+                    else if (pesanan.jumlah_tiket < 1)
+                        cout << "❌ Jumlah tidak valid.\n";
+                    else {
+                        pesanan.destinasi_dipesan = katalog[indeks - 1];
+                        katalog[indeks - 1].stok_tiket -= pesanan.jumlah_tiket;
+                        antrianPesanan.enqueue(pesanan);
+                        undoStack.push(pesanan);
+                        cout << "✅ Pesanan berhasil ditambahkan!\n";
+                    }   
+                }
+                pauseLanjut();
+                break;
+            }
+            
+            case 3: {
+                antrianPesanan.tampilkan();
+                pauseLanjut();
+                break;
+            }
+
+            case 4: {
+                cout << "\n🗑️ HAPUS PESANAN 🗑️\n";
+                if (!antrianPesanan.isEmpty()) {
+                    antrianPesanan.tampilkan();
+                    int pilihan_penghapusan;
+                    cout << "Pilih pesanan yang ingin dihapus (1-" << antrianPesanan.count << "): ";
+                    cin >> pilihan_penghapusan;
+
+                    if (pilihan_penghapusan < 1 || pilihan_penghapusan > antrianPesanan.count) {
+                        cout << "❌ Pilihan tidak valid.\n";
+                    } else {
+                        // Hapus pesanan dan dapatkan data pesanan yang dihapus
+                        Pesanan pesananDihapus = antrianPesanan.hapusPesananByIndex(pilihan_penghapusan);
+                        
+                        // Cek apakah berhasil dihapus (pesanan tidak kosong)
+                        if (!pesananDihapus.nama_pemesan.empty()) {
+                            // Kembalikan stok tiket ke katalog
+                            for (auto& d : katalog) {
+                                if (d.nama == pesananDihapus.destinasi_dipesan.nama) {
+                                    d.stok_tiket += pesananDihapus.jumlah_tiket;
+                                    break;
+                                }
+                            }
+                            
+                            // Simpan ke undo stack untuk bisa di-restore
+                            undoStack.push(pesananDihapus);
+                            
+                            cout << "✅ Pesanan atas nama " << pesananDihapus.nama_pemesan 
+                                 << " ke " << pesananDihapus.destinasi_dipesan.nama 
+                                 << " berhasil dihapus!\n";
+                        } else {
+                            cout << "❌ Gagal menghapus pesanan.\n";
+                        }
+                    }
+                } else {
+                    cout << "📭 Tidak ada pesanan yang bisa dihapus.\n";
                 }
                 pauseLanjut();
                 break;
             }
 
-            case 3: {
-                if (!undoStack.empty()) {
-                    Pesanan terakhir = undoStack.top();
-                    undoStack.pop();
-                    bool dihapus = antrian.hapusPesanan(terakhir);
+            case 5: {
+                  if (!undoStack.isEmpty()) {
+                    Pesanan terakhir = undoStack.pop();
+                    bool dihapus = antrianPesanan.hapusPesanan(terakhir);
                     if (dihapus) {
+                        // Kembalikan stok tiket
                         for (auto& d : katalog) {
                             if (d.nama == terakhir.destinasi_dipesan.nama) {
-                                d.stok_tiket++;
+                                d.stok_tiket += terakhir.jumlah_tiket;
                                 break;
                             }
                         }
@@ -274,22 +507,28 @@ int main() {
                 break;
             }
 
-            case 4: {
-                cout << "\n🚚 Memproses Semua Antrian Pesanan...\n";
-                if (antrian.isEmpty()) {
+            case 6: {
+                if (antrianPesanan.isEmpty()) {
                     cout << "📭 Tidak ada pesanan dalam antrian.\n";
                 } else {
-                    while (!antrian.isEmpty()) {
-                        Pesanan p = antrian.dequeue();
-                        cout << "👤 " << p.nama_pemesan << " memesan ke "
-                             << p.destinasi_dipesan.nama << " - Rp " << p.destinasi_dipesan.harga << endl;
+                    antrianPesanan.tampilkan();
+                    cout << "\n🚚 Memproses Semua Antrian Pesanan...\n";
+                    while (!antrianPesanan.isEmpty()) {
+                        Pesanan p = antrianPesanan.dequeue();
+                        for (int i = 0; i < p.jumlah_tiket; i++) {
+                            cout << "👤 Pesanan atas nama " << p.nama_pemesan << "untuk destinasi "
+                                << p.destinasi_dipesan.nama << " berhasil diproses!" 
+                                << " [Tiket ke-" << (i + 1) << "] - "
+                                << formatRupiah(p.destinasi_dipesan.harga) << endl;
+                        }
+
                     }
                 }
                 pauseLanjut();
                 break;
             }
 
-            case 5:
+            case 0:
                 cout << "👋 Terima kasih telah menggunakan aplikasi!\n";
                 break;
 
@@ -298,7 +537,8 @@ int main() {
                 pauseLanjut();
         }
 
-    } while (pilihan != 5);
+    } while (pilihan != 0);
+        
 
     return 0;
 }
