@@ -440,7 +440,10 @@ int main() {
             }
             
             case 3: {
-                antrianPesanan.tampilkan();
+                if (antrianPesanan.count != 0)
+                    antrianPesanan.tampilkan();
+                else 
+                    cout << "📭 Tidak ada pesanan dalam antrian.\n";
                 pauseLanjut();
                 break;
             }
