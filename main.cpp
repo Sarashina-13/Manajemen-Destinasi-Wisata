@@ -339,8 +339,8 @@ void tampilkanDashboard() {
     cout << "2. Tambah Pesanan\n";
     cout << "3. Lihat Daftar Pesanan\n";
     cout << "4. Hapus Pesanan\n";
-    cout << "6. Undo Pesanan Terakhir\n";
-    cout << "5. Proses Semua Pesanan\n";
+    cout << "5. Undo Pesanan Terakhir\n";
+    cout << "6. Proses Semua Pesanan\n";
     cout << "0. Keluar\n";
     cout << "---------------------------------------------\n";
     cout << "Pilih menu (1-5): ";
