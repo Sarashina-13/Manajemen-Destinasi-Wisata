@@ -22,7 +22,7 @@ struct Pesanan {
     Destinasi destinasi_dipesan;
 };
 
-// fromatting untuk harga
+// formatting untuk harga
 string formatRupiah(int angka) {
     string angkaStr = to_string(angka);
     string hasil;
@@ -79,7 +79,7 @@ struct Stack {
     }
 };
 
-// Queue dengan Array
+// Queue dengan Circular Array
 const int MAX_ANTRIAN = 100;
 
 struct Queue {
