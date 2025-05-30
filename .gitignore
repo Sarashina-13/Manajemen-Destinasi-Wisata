@@ -1,21 +1,15 @@
-# File executable (hasil compile)
 *.exe
 *.out
 *.app
 *.o
 *.obj
-
-# Folder build umum
 build/
 bin/
 Debug/
 Release/
-
-# File temporary/editor
-*.log
+.log
 *.tmp
 *.swp
 *.DS_Store
-
-# File backup editor
 *~
+/.vscode
