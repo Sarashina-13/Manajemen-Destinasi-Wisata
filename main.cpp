@@ -3,6 +3,8 @@
 #include <string>
 #include <iomanip>
 #include <algorithm>
+#include <unordered_map>
+#include <sstream>
 
 using namespace std;
 
@@ -21,6 +23,9 @@ struct Pesanan {
     int jumlah_tiket;
     Destinasi destinasi_dipesan;
     bool restore = false;
+    string kode_diskon = "";
+    float potongan_diskon = 0.0;
+    int harga_pesanan;
 };
 
 // formatting untuk harga
@@ -120,29 +125,34 @@ struct Queue {
 
     void tampilkan() {
         cout << "\n🎟️ DAFTAR PESANAN 🎟️\n";
-        cout << "======================================================================================================================\n";
+        cout << "================================================================================================================================\n";
         cout << left << setw(4)  << "No"
             << setw(20) << "Nama Pemesan"
             << setw(25) << "Nama Destinasi"
             << setw(20) << "Negara"
             << setw(20) << "Provinsi"
             << setw(15) << "Jumlah Tiket"
+            << setw(20) << "Diskon"
             << setw(20) << "Total Harga" << endl;
-        cout << "----------------------------------------------------------------------------------------------------------------------\n";
+        cout << "--------------------------------------------------------------------------------------------------------------------------------\n";
 
         for (int i = 0; i < count; i++) {
             int idx = (front + i) % MAX_ANTRIAN;
             const Pesanan& p = data[idx];
+            stringstream ss;
+            ss << fixed << setprecision(0) << p.potongan_diskon * 100 << "%";
             cout << left << setw(4)  << i + 1
                 << setw(20) << p.nama_pemesan
                 << setw(25) << p.destinasi_dipesan.nama
                 << setw(20) << p.destinasi_dipesan.negara
                 << setw(20) << p.destinasi_dipesan.provinsi
                 << setw(15) << p.jumlah_tiket
-                << setw(20) << formatRupiah(p.jumlah_tiket * p.destinasi_dipesan.harga) << endl;
+                << setw(20) << ss.str()
+                << setw(20) << formatRupiah(p.harga_pesanan) << endl;
+
     }
 
-    cout << "======================================================================================================================\n";
+    cout << "================================================================================================================================\n";
 }
 
 
@@ -344,7 +354,7 @@ void tampilkanDashboard() {
     cout << "6. Proses Semua Pesanan\n";
     cout << "0. Keluar\n";
     cout << "---------------------------------------------\n";
-    cout << "Pilih menu (1-6): ";
+    cout << "Pilih menu (0-6): ";
 }
 
 int main() {
@@ -371,6 +381,18 @@ int main() {
         {"Lake Toba", "Indonesia", "Sumatera Utara", "Samosir Island", 20, 175000}
     };
 
+    unordered_map<string, float> daftarDiskon = {
+            {"DISKON10", 0.10},        
+            {"WISATA20", 0.20},
+            {"LIBURHEMAT", 0.15},
+            {"SUPER50", 0.50},         
+            {"TRAVEL30", 0.30},        
+            {"HEMAT5", 0.05},         
+            {"RAHASIA25", 0.25},       
+            {"NGETRIP10", 0.10},      
+            {"MURMER540", 0.40},
+            {"HOKI 75", 0.75}
+    };
 
     Queue antrianPesanan;
     Stack undoStack;
@@ -394,22 +416,46 @@ int main() {
 
                 cout << "Pilih destinasi (1-" << katalog.size() << "): ";
                 cin >> indeks;
+
                 if (indeks < 1 || indeks > katalog.size()) {
                     cout << "❌ Pilihan tidak valid.\n";
                 } else if (katalog[indeks - 1].stok_tiket == 0) {
                     cout << "❌ Stok tiket habis!\n";
                     
-                } else {
+                } else { 
+                    cin.ignore();
                     cout << "Nama Pemesan: ";
                     getline(cin >> ws, pesanan.nama_pemesan);
                     cout << "Jumlah tiket yang dipesan: ";
                     cin >>  pesanan.jumlah_tiket;
+
                     if (pesanan.jumlah_tiket > katalog[indeks - 1].stok_tiket)
                         cout << "❌ Stok tiket kurang!\n";
                     else if (pesanan.jumlah_tiket < 1)
                         cout << "❌ Jumlah tidak valid.\n";
                     else {
                         pesanan.destinasi_dipesan = katalog[indeks - 1];
+                        
+                        cin.ignore(); 
+                        cout << "Masukkan kode diskon (tekan Enter jika tidak ada): ";
+                        getline(cin, pesanan.kode_diskon);
+                        
+                        if (!pesanan.kode_diskon.empty() && daftarDiskon.count(pesanan.kode_diskon)) {
+                            pesanan.potongan_diskon = daftarDiskon[pesanan.kode_diskon];
+                            pesanan.harga_pesanan = (1 - pesanan.potongan_diskon) * katalog[indeks - 1].harga * pesanan.jumlah_tiket;
+                            cout << "✅ Kode diskon valid. Anda mendapatkan diskon " 
+                            << pesanan.potongan_diskon * 100 << "%.\n";
+                        }  
+                        else if (!pesanan.kode_diskon.empty()) {
+                            cout << "⚠️  Kode diskon tidak valid. Diskon tidak diterapkan.\n";
+                            pesanan.kode_diskon = "";
+                            pesanan.potongan_diskon = 0.0;
+                            pesanan.harga_pesanan = katalog[indeks - 1].harga * pesanan.jumlah_tiket;
+                        }
+                        else {
+                            pesanan.harga_pesanan = katalog[indeks - 1].harga * pesanan.jumlah_tiket;;
+                        }
+
                         katalog[indeks - 1].stok_tiket -= pesanan.jumlah_tiket;
                         antrianPesanan.enqueue(pesanan);
                         undoStack.push(pesanan);
