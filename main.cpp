@@ -20,6 +20,7 @@ struct Pesanan {
     string nama_pemesan;
     int jumlah_tiket;
     Destinasi destinasi_dipesan;
+    bool restore = false;
 };
 
 // formatting untuk harga
@@ -343,7 +344,7 @@ void tampilkanDashboard() {
     cout << "6. Proses Semua Pesanan\n";
     cout << "0. Keluar\n";
     cout << "---------------------------------------------\n";
-    cout << "Pilih menu (1-5): ";
+    cout << "Pilih menu (1-6): ";
 }
 
 int main() {
@@ -451,7 +452,7 @@ int main() {
                                     break;
                                 }
                             }
-                            
+                            pesananDihapus.restore = true;
                             // Simpan ke undo stack untuk bisa di-restore
                             undoStack.push(pesananDihapus);
                             
@@ -472,8 +473,17 @@ int main() {
             case 5: {
                   if (!undoStack.isEmpty()) {
                     Pesanan terakhir = undoStack.pop();
-                    bool dihapus = antrianPesanan.hapusPesanan(terakhir);
-                    if (dihapus) {
+                    if (terakhir.restore) {
+                        for (auto& d : katalog) {
+                            if (d.nama == terakhir.destinasi_dipesan.nama) {
+                                    d.stok_tiket -= terakhir.jumlah_tiket;
+                                    antrianPesanan.enqueue(terakhir);
+                                    break;  // Masukkan kembali ke antrian
+                            }
+                        }
+                        cout << "✅ Pesanan berhasil dikembalikan melalui undo.\n";
+                    }
+                    else {
                         // Kembalikan stok tiket
                         for (auto& d : katalog) {
                             if (d.nama == terakhir.destinasi_dipesan.nama) {
@@ -481,7 +491,7 @@ int main() {
                                 break;
                             }
                         }
-                        cout << "↩️  Pesanan terakhir berhasil di-undo.\n";
+                        cout << "↩️ Pesanan terakhir berhasil di-undo.\n";
                     }
                 } else {
                     cout << "❌ Tidak ada pesanan yang bisa di-undo.\n";
@@ -504,8 +514,8 @@ int main() {
                                 << " [Tiket ke-" << (i + 1) << "] - "
                                 << formatRupiah(p.destinasi_dipesan.harga) << endl;
                         }
-
                     }
+                cout << "✅ Semua pesanan telah diproses!\n";
                 }
                 pauseLanjut();
                 break;
