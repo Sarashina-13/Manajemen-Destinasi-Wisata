@@ -35,7 +35,7 @@ User dapat melihat katalog, memesan destinasi, menggunakan kode diskon, serta me
   Menghapus pesanan dari antrian jika tidak jadi dipesan.
 
 - ↩️ **Undo Pesanan Terakhir**  
-  Mengembalikan pesanan terakhir yang dihapus menggunakan stack.
+  Mengembalikan pesanan terakhir yang ditambah atau dihapus menggunakan stack.
 
 - ✅ **Proses Semua Pesanan**  
   Memproses seluruh pesanan dalam queue dan menampilkan ringkasan konfirmasi.
