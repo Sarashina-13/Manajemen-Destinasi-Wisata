@@ -524,19 +524,21 @@ int main() {
                             if (d.nama == terakhir.destinasi_dipesan.nama) {
                                     d.stok_tiket -= terakhir.jumlah_tiket;
                                     antrianPesanan.enqueue(terakhir);
-                                    break;  // Masukkan kembali ke antrian
+                                    break;  
                             }
                         }
                         cout << "✅ Pesanan berhasil dikembalikan melalui undo.\n";
                     }
                     else {
-                        // Kembalikan stok tiket
-                        for (auto& d : katalog) {
-                            if (d.nama == terakhir.destinasi_dipesan.nama) {
-                                d.stok_tiket += terakhir.jumlah_tiket;
-                                break;
+                        bool dihapus = antrianPesanan.hapusPesanan(terakhir);
+                        if (dihapus) {
+                            for (auto& d : katalog) {
+                                if (d.nama == terakhir.destinasi_dipesan.nama) {
+                                    d.stok_tiket += terakhir.jumlah_tiket;
+                                    break;
                             }
-                        }
+                            }
+                        }       
                         cout << "↩️ Pesanan terakhir berhasil di-undo.\n";
                     }
                 } else {
