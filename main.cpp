@@ -557,7 +557,7 @@ int main() {
                     while (!antrianPesanan.isEmpty()) {
                         Pesanan p = antrianPesanan.dequeue();
                         for (int i = 0; i < p.jumlah_tiket; i++) {
-                            cout << "👤 Pesanan atas nama " << p.nama_pemesan << "untuk destinasi "
+                            cout << "👤 Pesanan atas nama " << p.nama_pemesan << " untuk destinasi "
                                 << p.destinasi_dipesan.nama << " berhasil diproses!" 
                                 << " [Tiket ke-" << (i + 1) << "] - "
                                 << formatRupiah(p.destinasi_dipesan.harga) << endl;
