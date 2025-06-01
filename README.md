@@ -76,4 +76,4 @@ User dapat melihat katalog, memesan destinasi, menggunakan kode diskon, serta me
 
 1. Clone repositori ini:
    ```bash
-   git clone https://github.com/Sarashina-13/Manajemen-Destinasi-Wisata.git
+   git clone https://github.com/jasonbagaskaraa/Manajemen-Destinasi-Wisata/blob/main/main.cpp
